@@ -230,23 +230,6 @@ function App() {
     enviarRegistroUso(registro);
   }
 
-  // NUEVO: Descargar CSV de uso
-  const descargarCSVuso = () => {
-    const csv = localStorage.getItem("etiquetas-uso-csv") || "";
-    if (!csv) {
-      showToast("No hay registros de uso.");
-      return;
-    }
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "uso-etiquetas.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("CSV de uso descargado.");
-  };
-
   // Agregar producto a la tabla (no requiere provincia)
   const agregarProducto = () => {
     if (!precioValido || !producto.trim()) {
@@ -595,13 +578,6 @@ function App() {
               disabled={productos.length === 0}
             >
               Limpiar productos
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 rounded bg-gray-100 text-gray-800 text-xs font-semibold border border-gray-300 hover:bg-gray-200 transition"
-              onClick={descargarCSVuso}
-            >
-              Descargar CSV de uso
             </button>
           </div>
           {/* Tabla de productos */}
