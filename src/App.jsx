@@ -666,6 +666,26 @@ function App() {
             />
           )}
 
+          {/* Texto disclaimer */}
+          <div className="text-xs text-gray-500 mt-4 text-justify">
+            <strong>Aclaración: </strong>
+            El usuario reconoce y acepta que los datos generados son a título
+            meramente informativo y orientativo. La herramienta no apunta a
+            establecer precios finales para ninguna operación sino brindar, de
+            manera detallada, la información que un comercio puede necesitar
+            para definir, por decisión propia, los precios de los productos y
+            servicios que comercializa. Asimismo, CAME no se responsabiliza por
+            la información brindada por el sistema, su actualización o su falta
+            de disponibilidad. Para mayor información{" "}
+            <a
+              href="https://www.argentina.gob.ar/sites/default/files/exhibicion_de_precios_resolucion_4_2025.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              click aquí
+            </a>
+          </div>
+
           {/* Toast */}
           {toast && <Toast message={toast} onClose={() => setToast(null)} />}
         </CardContent>
