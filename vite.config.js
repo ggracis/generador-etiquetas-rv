@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from "url";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/etiquetas/", // <-- NUEVO: base para producción
   plugins: [react()],
   resolve: {
     alias: {

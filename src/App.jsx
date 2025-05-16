@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import ImpresionEtiquetas from "./ImpresionEtiquetas";
-import * as XLSX from "xlsx"; // NUEVO
+import * as XLSX from "xlsx";
 import "./index.css";
 
 const provincias = [
@@ -81,6 +81,32 @@ function normalizarIVA(valor) {
   )
     return "Exento";
   return "21%";
+}
+
+// Toast simple
+function Toast({ message, onClose }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: 24,
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "#222",
+        color: "#fff",
+        padding: "12px 24px",
+        borderRadius: 8,
+        zIndex: 9999,
+        fontSize: 16,
+        minWidth: 200,
+        textAlign: "center",
+        boxShadow: "0 2px 12px #0005",
+      }}
+      onClick={onClose}
+    >
+      {message}
+    </div>
+  );
 }
 
 function App() {
@@ -160,11 +186,75 @@ function App() {
   // NUEVO: Limpiar todos los productos
   const limpiarProductos = () => {
     setProductos([]);
+    showToast("Productos eliminados.");
+  };
+
+  // Toast state
+  const [toast, setToast] = useState(null);
+  const toastTimeout = useRef();
+
+  function showToast(msg, ms = 2500) {
+    setToast(msg);
+    clearTimeout(toastTimeout.current);
+    toastTimeout.current = setTimeout(() => setToast(null), ms);
+  }
+
+  // Envía el registro de uso al servidor (AJAX POST)
+  async function enviarRegistroUso(registro) {
+    try {
+      await fetch("/etiquetas/registro-uso.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registro),
+      });
+    } catch (e) {
+      // No mostrar error al usuario, solo log
+      // console.error("No se pudo registrar el uso", e);
+    }
+  }
+
+  // NUEVO: Guardar registro de uso en el servidor como CSV
+  function registrarUso(tipo = "imprimir") {
+    const now = new Date();
+    const fecha = now.toLocaleDateString("es-AR");
+    const hora = now.toLocaleTimeString("es-AR");
+    const userAgent = navigator.userAgent;
+    const registro = {
+      accion: tipo,
+      provincia,
+      cantidad: productos.length,
+      fecha,
+      hora,
+      userAgent,
+    };
+    enviarRegistroUso(registro);
+  }
+
+  // NUEVO: Descargar CSV de uso
+  const descargarCSVuso = () => {
+    const csv = localStorage.getItem("etiquetas-uso-csv") || "";
+    if (!csv) {
+      showToast("No hay registros de uso.");
+      return;
+    }
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "uso-etiquetas.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV de uso descargado.");
   };
 
   // Agregar producto a la tabla (no requiere provincia)
   const agregarProducto = () => {
-    if (!precioValido || !producto.trim()) return;
+    if (!precioValido || !producto.trim()) {
+      showToast(
+        "Por favor, ingrese un número válido en el campo de Precio Final."
+      );
+      return;
+    }
     setProductos([
       ...productos,
       {
@@ -183,6 +273,7 @@ function App() {
       },
     ]);
     limpiarCampos();
+    showToast("Producto agregado.");
   };
 
   // NUEVO: Importar productos desde Excel
@@ -238,6 +329,8 @@ function App() {
         });
       }
       setProductos((prev) => [...prev, ...nuevos]);
+      showToast(`Importados ${nuevos.length} productos.`);
+      registrarUso("importar");
     };
     reader.readAsArrayBuffer(file);
     // Limpiar input para permitir importar el mismo archivo de nuevo si se desea
@@ -259,6 +352,7 @@ function App() {
           EAN: "",
         },
       ];
+      showToast("Descargaste la plantilla de productos.");
     } else {
       data = productos.map((p) => ({
         Producto: p.producto,
@@ -268,6 +362,8 @@ function App() {
         IVA: p.iva,
         EAN: p.ean,
       }));
+      showToast("Productos exportados a Excel.");
+      registrarUso("exportar");
     }
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -275,9 +371,9 @@ function App() {
     XLSX.writeFile(wb, "productos-etiquetas.xlsx");
   };
 
-  // Alerta solo si precio no válido
-  let showAlerta = false;
-  if (!precioValido) showAlerta = true;
+  // Alerta solo si precio no válido (reemplazado por Toast)
+  // let showAlerta = false;
+  // if (!precioValido) showAlerta = true;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f7fafc]">
@@ -287,7 +383,7 @@ function App() {
             <h1 className="text-4xl font-bold text-gray-800">
               Generador de etiquetas
             </h1>
-            <img src="/CAME.png" alt="CAME" className="max-w-[120px]" />
+            <img src="CAME.png" alt="CAME" className="max-w-[120px]" />
           </div>
           <p className="mb-2 text-lg">
             De acuerdo a la{" "}
@@ -500,6 +596,13 @@ function App() {
             >
               Limpiar productos
             </button>
+            <button
+              type="button"
+              className="px-4 py-2 rounded bg-gray-100 text-gray-800 text-xs font-semibold border border-gray-300 hover:bg-gray-200 transition"
+              onClick={descargarCSVuso}
+            >
+              Descargar CSV de uso
+            </button>
           </div>
           {/* Tabla de productos */}
           {productos.length > 0 && (
@@ -546,11 +649,6 @@ function App() {
               </table>
             </div>
           )}
-          {showAlerta && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-2 rounded">
-              Por favor, ingrese un número válido en el campo de Precio Final.
-            </div>
-          )}
           {/* Botón para imprimir y área de impresión */}
           {productos.length > 0 && (
             <ImpresionEtiquetas
@@ -563,8 +661,14 @@ function App() {
               etiquetaHeight={etiquetaHeight}
               colorTexto={colorTexto}
               margenHoja={margenHoja}
+              onImprimir={() => {
+                showToast("Enviando a imprimir...");
+                registrarUso("imprimir");
+              }}
             />
           )}
+          {/* Toast */}
+          {toast && <Toast message={toast} onClose={() => setToast(null)} />}
         </CardContent>
       </Card>
     </div>

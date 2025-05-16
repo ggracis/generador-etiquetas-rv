@@ -319,6 +319,7 @@ export default function ImpresionEtiquetas({
   etiquetaHeight,
   colorTexto,
   margenHoja,
+  onImprimir, // NUEVO
 }) {
   const contentRef = useRef(null);
 
@@ -333,6 +334,9 @@ export default function ImpresionEtiquetas({
       } 
       body { background: white; margin: 0; }
     `,
+    onBeforeGetContent: () => {
+      if (onImprimir) onImprimir();
+    },
   });
 
   return (
