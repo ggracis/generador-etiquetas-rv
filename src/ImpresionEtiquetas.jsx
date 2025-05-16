@@ -343,7 +343,7 @@ export default function ImpresionEtiquetas({
     <>
       <div className="mb-4 flex justify-end">
         <button
-          className="px-4 py-2 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition"
+          className="px-4 py-2 rounded bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition w-full px-4 py-2 rounded cursor-pointer"
           onClick={reactToPrintFn}
         >
           Imprimir etiquetas

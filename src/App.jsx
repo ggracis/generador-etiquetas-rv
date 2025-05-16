@@ -354,6 +354,15 @@ function App() {
     XLSX.writeFile(wb, "productos-etiquetas.xlsx");
   };
 
+  // Nuevo: validación de campos obligatorios
+  const camposObligatoriosCompletos =
+    provincia !== "-" &&
+    producto.trim() &&
+    precioValido &&
+    iva &&
+    unidad &&
+    (unidad === "Sin unidades" || cantidad);
+
   // Alerta solo si precio no válido (reemplazado por Toast)
   // let showAlerta = false;
   // if (!precioValido) showAlerta = true;
@@ -415,6 +424,7 @@ function App() {
               </SelectContent>
             </Select>
           </div>
+          {/* Campos de producto reorganizados */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
             <div>
               <Label>Producto</Label>
@@ -422,6 +432,25 @@ function App() {
                 value={producto}
                 onChange={(e) => setProducto(e.target.value)}
                 placeholder="Nombre del producto"
+              />
+            </div>
+            <div>
+              <Label>Código EAN</Label>
+              <Input
+                value={ean}
+                onChange={(e) => setEan(e.target.value)}
+                placeholder="Ingrese código EAN"
+                maxLength={13}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+            <div>
+              <Label>Precio Final del Producto</Label>
+              <Input
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                placeholder="$"
               />
             </div>
             <div>
@@ -440,14 +469,6 @@ function App() {
               </Select>
             </div>
             <div>
-              <Label>Precio Final del Producto</Label>
-              <Input
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                placeholder="$"
-              />
-            </div>
-            <div>
               <Label>Unidad</Label>
               <Select value={unidad} onValueChange={setUnidad}>
                 <SelectTrigger>
@@ -462,29 +483,36 @@ function App() {
                 </SelectContent>
               </Select>
             </div>
-            {unidad !== "Sin unidades" && (
-              <div>
-                <Label>Cantidad</Label>
-                <Input
-                  type="number"
-                  min="0.1"
-                  step="0.01"
-                  value={cantidad}
-                  onChange={(e) => setCantidad(e.target.value)}
-                />
-              </div>
-            )}
-            <div>
-              <Label>Código EAN</Label>
+          </div>
+          {unidad !== "Sin unidades" && (
+            <div className="mb-2">
+              <Label>Cantidad</Label>
               <Input
-                value={ean}
-                onChange={(e) => setEan(e.target.value)}
-                placeholder="Ingrese código EAN"
-                maxLength={13}
+                type="number"
+                min="0.1"
+                step="0.01"
+                value={cantidad}
+                onChange={(e) => setCantidad(e.target.value)}
               />
             </div>
+          )}
+          {/* Botón de agregar producto en una fila completa */}
+          <div className="mb-6">
+            <button
+              type="button"
+              className={`w-full px-4 py-2 rounded text-white text-sm font-semibold transition ${
+                camposObligatoriosCompletos
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+              onClick={agregarProducto}
+              disabled={!camposObligatoriosCompletos}
+            >
+              Agregar producto
+            </button>
           </div>
-          {/* Personalización de hoja y etiqueta */}
+          {/* División visual para configuración de hoja */}
+          <hr className="my-6" />
           <div className="flex flex-wrap gap-4 items-end mb-6">
             <div>
               <Label className="block text-xs mb-1">Tamaño de hoja</Label>
@@ -541,21 +569,13 @@ function App() {
                 type="color"
                 value={colorTexto}
                 onChange={(e) => setColorTexto(e.target.value)}
-                className="w-10 h-10 p-0 border-0"
+                className="w-10 h-10 p-0 border-0 cursor-pointer "
               />
             </div>
-            <button
-              type="button"
-              className="ml-4 px-4 py-2 rounded bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-              onClick={agregarProducto}
-              disabled={!precioValido || !producto.trim()}
-            >
-              Agregar producto
-            </button>
           </div>
-          {/* Importar/Exportar/Limpiar Excel */}
+          {/* Botones de importar/exportar/limpiar en fila, cada uno 30% */}
           <div className="flex gap-4 mb-4">
-            <label className="px-4 py-2 rounded bg-gray-200 text-gray-800 text-sm font-semibold cursor-pointer hover:bg-gray-300 transition">
+            <label className="flex-1 min-w-[100px] max-w-[33%] px-4 py-2 rounded bg-blue-300 text-gray-800 text-sm font-semibold cursor-pointer hover:bg-blue-200 transition text-center">
               Importar Excel
               <input
                 type="file"
@@ -566,20 +586,21 @@ function App() {
             </label>
             <button
               type="button"
-              className="px-4 py-2 rounded bg-gray-200 text-gray-800 text-sm font-semibold hover:bg-gray-300 transition"
+              className="flex-1 min-w-[100px] max-w-[33%] px-4 py-2 rounded bg-blue-300 text-gray-800 text-sm font-semibold  cursor-pointer hover:bg-blue-200 transition"
               onClick={handleExportExcel}
             >
               Exportar Excel
             </button>
             <button
               type="button"
-              className="px-4 py-2 rounded bg-red-200 text-red-800 text-sm font-semibold hover:bg-red-300 transition"
+              className="flex-1 min-w-[100px] max-w-[33%] px-4 py-2 rounded bg-red-200 text-red-800 text-sm font-semibold cursor-pointer hover:bg-red-300 transition"
               onClick={limpiarProductos}
               disabled={productos.length === 0}
             >
               Limpiar productos
             </button>
           </div>
+
           {/* Tabla de productos */}
           {productos.length > 0 && (
             <div className="mb-8">
@@ -625,6 +646,7 @@ function App() {
               </table>
             </div>
           )}
+
           {/* Botón para imprimir y área de impresión */}
           {productos.length > 0 && (
             <ImpresionEtiquetas
@@ -643,6 +665,7 @@ function App() {
               }}
             />
           )}
+
           {/* Toast */}
           {toast && <Toast message={toast} onClose={() => setToast(null)} />}
         </CardContent>
